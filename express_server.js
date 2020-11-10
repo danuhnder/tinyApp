@@ -4,6 +4,10 @@ const cookieParser = require('cookie-parser');
 const app = express();
 const PORT = 8080; // default port 8080
 // this will become database with SQL access
+const users = {
+
+}
+
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com"
@@ -55,7 +59,10 @@ app.get("/register", (req, res) => {
 });
 
 app.post("/register", (req, res) => {
-  console.log(req.body);
+  const userData = req.body;
+  const userID = generateRandomString();
+  users[userID] = { userID, email: userData.email, password: userData.password };
+  console.log(users);
   res.end("THANKS FOR YOUR DATA CHUMP");
 
 })
