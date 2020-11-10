@@ -19,6 +19,14 @@ app.use(cookieParser());
 app.set('view engine', 'ejs');
 // parses body of response
 app.use(bodyParser.urlencoded({extended: true}));
+// sets a cookie from username login
+app.post("/login", (req, res) => {
+  const userName = req.body.username;
+  res.cookie('username', userName);
+  res.redirect("/urls");
+
+});
+
 // posting logic
 app.post("/urls", (req, res) => {
   const longURL = req.body.longURL; // gets target URL from request body, should check here to make sure URL is correctly formatted + includes http://
@@ -36,12 +44,18 @@ app.post("/url_mod/:shortURL", (req, res) => {
 })
 // index of tiny URLS
 app.get("/urls", (req, res) => {
-  const templateVars = { urls: urlDatabase };
+  const templateVars = { 
+    urls: urlDatabase, 
+    username: req.cookies["username"] };
   res.render("urls_index", templateVars);
 });
 // go forth and make a tiny link
 app.get("/urls/new", (req, res) => {
-  res.render("urls_new");
+  const templateVars = {
+    username: req.cookies["username"],
+    
+  };
+  res.render("urls_new", templateVars);
 });
 // why not keep it useful for the APIs
 app.get("/urls.json", (req, res) => {
@@ -57,6 +71,7 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 // IMPORTANT: DON'T BUILD any "/urls/... below this!
 app.get("/urls/:shortURL", (req, res) => {
   const templateVars = {
+    username: req.cookies["username"],
     shortURL: req.params.shortURL, //this appears in the html
     longURL: urlDatabase[req.params.shortURL]
   };

@@ -10,9 +10,13 @@
         <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
       </div>
       <form class="form-inline ml-auto" action="/login" method="POST">
-        <label for="username">Username:</label>
-        <input class="form-control" type="text" name="username" placeholder="username" style="width: 300px; margin: 1em">
-        <button type="submit" class="btn btn-secondary">Submit</button>
+        <% if (!username) { %>
+          <input class="form-control" type="text" name="username" placeholder="username" style="width: 300px; margin: 1em">
+          <button type="submit" class="btn btn-secondary">Log In!</button>
+        <% } else { %>
+          <label for="username">Welcome <%=username%>!</label>
+          <button type="submit" class="btn btn-secondary">Log Out!</button>
+          <% } %>  
       </form>
     </div>
   </nav>
