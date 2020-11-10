@@ -19,11 +19,19 @@ app.set('view engine', 'ejs');
 app.use(bodyParser.urlencoded({extended: true}));
 // posting logic
 app.post("/urls", (req, res) => {
-  const longURL = req.body.longURL; // gets target URL from request body,
+  const longURL = req.body.longURL; // gets target URL from request body, should check here to make sure URL is correctly formatted + includes http://
   const shortURL = generateRandomString(); // random string
   urlDatabase[shortURL] = `${longURL}`;  // adds new shortURL : longURL key:value to database object (this will change to SQL)
   res.redirect(`/urls/${shortURL}`);         // redirects to shortURL instance!
 });
+// modify an existing URL
+app.post("/url_mod/:shortURL", (req, res) => {
+  const shortURL = req.params.shortURL; //takes shortURL from origin page
+  const longURL = req.body.longURL; // new user submitted longURL
+  urlDatabase[shortURL] = `${longURL}`; // modifies existing entry
+  res.redirect(`/urls/${shortURL}`) // redirects to same page but with new data (hopefully)
+
+})
 // index of tiny URLS
 app.get("/urls", (req, res) => {
   const templateVars = { urls: urlDatabase };
