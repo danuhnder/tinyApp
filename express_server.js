@@ -46,6 +46,20 @@ app.post("/url_mod/:shortURL", (req, res) => {
   res.redirect(`/urls/${shortURL}`) // redirects to same page but with new data (hopefully)
 
 })
+// registration page
+app.get("/register", (req, res) => {
+  const templateVars = {
+    username: req.cookies["username"]
+  };
+  res.render("urls_register", templateVars);
+});
+
+app.post("/register", (req, res) => {
+  console.log(req.body);
+  res.end("THANKS FOR YOUR DATA CHUMP");
+
+})
+
 // index of tiny URLS
 app.get("/urls", (req, res) => {
   const templateVars = { 

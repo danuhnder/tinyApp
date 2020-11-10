@@ -10,11 +10,13 @@
         <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
       </div>
       <% if (!username) { %>
+        <!-- login form only visible if not logged in --> 
       <form class="form-inline ml-auto" action="/login" method="POST">
           <input class="form-control" type="text" name="username" placeholder="username" style="width: 300px; margin: 1em">
           <button type="submit" class="btn btn-secondary">Log In!</button>
         </form>
       <% } else { %>
+         <!-- logout form visible only if logged in --> 
         <form class="form-inline ml-auto" action="/logout" method="POST">
           <label for="username">Welcome <%=username%>!</label>
           <button type="submit" class="btn btn-secondary">Log Out!</button>
