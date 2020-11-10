@@ -21,7 +21,7 @@ app.use(bodyParser.urlencoded({extended: true}));
 app.post("/urls", (req, res) => {
   const longURL = req.body.longURL; // gets target URL from request body,
   const shortURL = generateRandomString(); // random string
-  urlDatabase[shortURL] = `http://${longURL}`;  // adds new shortURL : longURL key:value to database object (this will change to SQL)
+  urlDatabase[shortURL] = `${longURL}`;  // adds new shortURL : longURL key:value to database object (this will change to SQL)
   res.redirect(`/urls/${shortURL}`);         // redirects to shortURL instance!
 });
 // index of tiny URLS
@@ -37,6 +37,13 @@ app.get("/urls/new", (req, res) => {
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
+// delete requested link and redirect back to index page
+app.post("/urls/:shortURL/delete", (req, res) => {
+  const shortURL = req.params.shortURL;
+  delete urlDatabase[shortURL];
+  res.redirect("/urls");
+});
+
 // IMPORTANT: DON'T BUILD any "/urls/... below this!
 app.get("/urls/:shortURL", (req, res) => {
   const templateVars = {
