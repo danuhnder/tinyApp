@@ -1,5 +1,6 @@
 const express = require("express");
 const bodyParser = require("body-parser");
+const cookieParser = require('cookie-parser');
 const app = express();
 const PORT = 8080; // default port 8080
 // this will become database with SQL access
@@ -12,7 +13,8 @@ const generateRandomString = () => {
   const randomString = Math.random().toString(36).substring(2, 8);
   return randomString;
 };
-
+// allows cookieParser
+app.use(cookieParser());
 // allows inline JS/html integration
 app.set('view engine', 'ejs');
 // parses body of response
