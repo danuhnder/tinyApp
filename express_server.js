@@ -24,8 +24,12 @@ app.post("/login", (req, res) => {
   const userName = req.body.username;
   res.cookie('username', userName);
   res.redirect("/urls");
-
 });
+// clears cookie when logout button triggered
+app.post("/logout", (req, res) => {
+  res.clearCookie('username')
+  res.redirect("/urls");
+})
 
 // posting logic
 app.post("/urls", (req, res) => {
