@@ -21,28 +21,25 @@ app.set('view engine', 'ejs');
 // parses body of response
 app.use(bodyParser.urlencoded({extended: true}));
 
+// ** REGISTRATION FUNCTIONALITY 
 
-// **
-// *
-// *
-// * REGISTRATION FUNCTIONALITY 
 const users = {
   qy3yow:{ 
     userID: 'qy3yow',
-    email: 'toby@gunsbad.net',
+    email: 'test@test',
     password: 'tobyrules' 
   }
-}
+};
 // returns true if email address is already in user database
 const emailChecker = (email, users) => {
   for (let user in users) {
     if (users[user].email === email) {
       return true;
     }
-  }
+  };
   return false;
-}
-console.log(emailChecker('toby@gunsbad.net', users))
+};
+
 // registration page - TODO make this redirect to /urls if logged in
 app.get("/register", (req, res) => {
   const templateVars = {
@@ -52,17 +49,12 @@ app.get("/register", (req, res) => {
 });
 
 app.post("/register", (req, res) => {
-  const userData = req.body;
-  console.log(users);
-  console.log(userData.email)
-  console.log(emailChecker(userData.email))
+  const userData = req.body; // contains email and password
   // sends status 400 if email or password are falsey OR if email is already registered
   if (!userData.email || !userData.password) {
-    res.status(400).send("OOOOPS! Please enter an email address and password!")
-    
+    res.status(400).send("OOOOPS! Please enter an email address and password!");
   } else if (emailChecker(userData.email, users)) {
-    res.status(400).send("Oooops - looks like that email address is already registered!")
-    urls
+    res.status(400).send("Oooops - looks like that email address is already registered!");
   } else {
   // once email passes checks, generates random user ID and pushes data to users object
   const userID = generateRandomString();
@@ -97,7 +89,7 @@ app.post("/url_mod/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL; //takes shortURL from origin page
   const longURL = req.body.longURL; // new user submitted longURL
   urlDatabase[shortURL] = `${longURL}`; // modifies existing entry
-  res.redirect(`/urls/${shortURL}`) // redirects to same page but with new data (hopefully)
+  res.redirect(`/urls/${shortURL}`) // redirects to same page but with new data
 
 })
 
