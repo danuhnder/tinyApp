@@ -5,8 +5,12 @@ const app = express();
 const PORT = 8080; // default port 8080
 // this will become database with SQL access
 const users = {
-
+  qy3yow:
+  { userID: 'qy3yow',
+    email: 'toby@gunsbad.net',
+    password: 'tobyrules' }
 }
+
 
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
@@ -23,15 +27,15 @@ app.use(cookieParser());
 app.set('view engine', 'ejs');
 // parses body of response
 app.use(bodyParser.urlencoded({extended: true}));
-// sets a cookie from username login
+// sets a cookie from userID login
 app.post("/login", (req, res) => {
-  const userName = req.body.username;
-  res.cookie('username', userName);
+  const userName = req.body.userID;
+  res.cookie('userID', userName);
   res.redirect("/urls");
 });
 // clears cookie when logout button triggered
 app.post("/logout", (req, res) => {
-  res.clearCookie('username')
+  res.clearCookie('userID')
   res.redirect("/urls");
 })
 
@@ -53,7 +57,7 @@ app.post("/url_mod/:shortURL", (req, res) => {
 // registration page
 app.get("/register", (req, res) => {
   const templateVars = {
-    username: req.cookies["username"]
+    user: users[req.cookies["userID"]]
   };
   res.render("urls_register", templateVars);
 });
@@ -62,8 +66,8 @@ app.post("/register", (req, res) => {
   const userData = req.body;
   const userID = generateRandomString();
   users[userID] = { userID, email: userData.email, password: userData.password };
-  console.log(users);
-  res.end("THANKS FOR YOUR DATA CHUMP");
+  res.cookie("userID", userID);
+  res.redirect('/urls');
 
 })
 
@@ -71,13 +75,13 @@ app.post("/register", (req, res) => {
 app.get("/urls", (req, res) => {
   const templateVars = { 
     urls: urlDatabase, 
-    username: req.cookies["username"] };
+    user: users[req.cookies["userID"]] };
   res.render("urls_index", templateVars);
 });
 // go forth and make a tiny link
 app.get("/urls/new", (req, res) => {
   const templateVars = {
-    username: req.cookies["username"],
+    user: users[req.cookies["userID"]]
     
   };
   res.render("urls_new", templateVars);
@@ -96,7 +100,7 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 // IMPORTANT: DON'T BUILD any "/urls/... below this!
 app.get("/urls/:shortURL", (req, res) => {
   const templateVars = {
-    username: req.cookies["username"],
+    user: users[req.cookies["userID"]],
     shortURL: req.params.shortURL, //this appears in the html
     longURL: urlDatabase[req.params.shortURL]
   };
