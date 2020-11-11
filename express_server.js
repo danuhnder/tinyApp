@@ -9,23 +9,21 @@ app.use(cookieParser());
 app.set('view engine', 'ejs');
 app.use(bodyParser.urlencoded({extended: true}));
 
+//** PLACEHOLDER DATABASES TO CHECK FUNCTIONALITY */
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com"
 };
 
 const userDatabase = {
-  qy3yow:{ 
+  qy3yow:{
     userID: 'qy3yow',
     email: 'test@test',
-    password: 'test' 
+    password: 'test'
   }
 };
 
-// ** REGISTRATION FUNCTIONALITY 
-
-// user database
-
+//** REGISTRATION FUNCTIONALITY */
 
 // registration page -  redirects to /urls if logged in
 app.get("/register", (req, res) => {
@@ -34,7 +32,7 @@ app.get("/register", (req, res) => {
   };
   if (!templateVars.user) {
     res.render("urls_register", templateVars);
-  } else res.redirect("/urls")
+  } else res.redirect("/urls");
 });
 
 app.post("/register", (req, res) => {
@@ -46,22 +44,22 @@ app.post("/register", (req, res) => {
     res.status(403).send("Oooops - looks like that email address is already registered!");
   } else {
   // once email passes checks, generates random user ID and pushes data to users object
-  const userID = generateRandomString();
-  userDatabase[userID] = { userID, email, password };
-  // sets cookie from userID
-  res.cookie("userID", userID);
-  res.redirect('/urls');
-  };
-})
+    const userID = generateRandomString();
+    userDatabase[userID] = { userID, email, password };
+    // sets cookie from userID
+    res.cookie("userID", userID);
+    res.redirect('/urls');
+  }
+});
 // send user to login page - redirects to /url if logged in
 app.get("/login", (req, res) => {
   const templateVars = {
-    user: userDatabase[req.cookies["userID"]],
+    user: userDatabase[req.cookies["userID"]]
   };
   if (!templateVars.user) {
     res.render("urls_login", templateVars);
-  } else res.redirect("/urls")
-})
+  } else res.redirect("/urls");
+});
 
 // LOGIN LOGIC
 app.post("/login", (req, res) => {
@@ -87,9 +85,9 @@ app.post("/login", (req, res) => {
 
 // clears cookie when logout button triggered
 app.post("/logout", (req, res) => {
-  res.clearCookie('userID')
+  res.clearCookie('userID');
   res.redirect("/urls");
-})
+});
 
 // posting logic
 app.post("/urls", (req, res) => {
@@ -104,9 +102,8 @@ app.post("/url_mod/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL; //takes shortURL from origin page
   const longURL = req.body.longURL; // new user submitted longURL
   urlDatabase[shortURL] = `${longURL}`; // modifies existing entry
-  res.redirect(`/urls/${shortURL}`) // redirects to same page but with new data
-
-})
+  res.redirect(`/urls/${shortURL}`); // redirects to same page but with new data
+});
 
 // home page
 app.get("/", (req, res) => {
@@ -156,7 +153,7 @@ app.get("/urls/:shortURL", (req, res) => {
 // Redirects shortform URL directly to target webaddress
 app.get("/u/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
-  const longURL = urlDatabase[shortURL];   
+  const longURL = urlDatabase[shortURL];
   res.redirect(longURL);
 });
 
