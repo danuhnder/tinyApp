@@ -2,29 +2,19 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const cookieParser = require('cookie-parser');
 const app = express();
-const PORT = 8080; // default port 8080
-// this will become database with SQL access
+const PORT = 8080;
+const { checkEmail, authenticateUser, generateRandomString } = require("./helpers");
+
+app.use(cookieParser());
+app.set('view engine', 'ejs');
+app.use(bodyParser.urlencoded({extended: true}));
 
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com"
 };
-// used to generate shortURL;
-const generateRandomString = () => {
-  const randomString = Math.random().toString(36).substring(2, 8);
-  return randomString;
-};
-// allows cookieParser
-app.use(cookieParser());
-// allows inline JS/html integration
-app.set('view engine', 'ejs');
-// parses body of response
-app.use(bodyParser.urlencoded({extended: true}));
 
-// ** REGISTRATION FUNCTIONALITY 
-
-// user database
-const users = {
+const userDatabase = {
   qy3yow:{ 
     userID: 'qy3yow',
     email: 'test@test',
@@ -32,38 +22,32 @@ const users = {
   }
 };
 
-// returns user object if email address is already in user database
-const emailChecker = (email, users) => {
-  for (let user in users) {
-    if (users[user].email === email) {
-      return users[user];
-    }
-  };
-  return false;
-};
+// ** REGISTRATION FUNCTIONALITY 
+
+// user database
+
 
 // registration page -  redirects to /urls if logged in
 app.get("/register", (req, res) => {
   const templateVars = {
-    user: users[req.cookies["userID"]]
+    user: userDatabase[req.cookies["userID"]],
   };
   if (!templateVars.user) {
     res.render("urls_register", templateVars);
   } else res.redirect("/urls")
-  
 });
 
 app.post("/register", (req, res) => {
-  const credentials = req.body; // contains email and password
+  const { email, password } = req.body; // contains email and password
   // sends status 400 if email or password are falsey OR if email is already registered
-  if (!credentials.email || !credentials.password) {
+  if (!email || !password) {
     res.status(403).send("OOOOPS! Please enter an email address and password!");
-  } else if (emailChecker(credentials.email, users)) {
+  } else if (checkEmail(email, userDatabase)) {
     res.status(403).send("Oooops - looks like that email address is already registered!");
   } else {
   // once email passes checks, generates random user ID and pushes data to users object
   const userID = generateRandomString();
-  users[userID] = { userID, email: credentials.email, password: credentials.password };
+  userDatabase[userID] = { userID, email, password };
   // sets cookie from userID
   res.cookie("userID", userID);
   res.redirect('/urls');
@@ -72,7 +56,7 @@ app.post("/register", (req, res) => {
 // send user to login page - redirects to /url if logged in
 app.get("/login", (req, res) => {
   const templateVars = {
-    user: users[req.cookies["userID"]]
+    user: userDatabase[req.cookies["userID"]],
   };
   if (!templateVars.user) {
     res.render("urls_login", templateVars);
@@ -81,17 +65,17 @@ app.get("/login", (req, res) => {
 
 // LOGIN LOGIC
 app.post("/login", (req, res) => {
-  const credentials = req.body;
+  const { email, password } = req.body;
   // checks to see if email & password are truthy
-  if (!credentials.email || !credentials.password) {
+  if (!email || !password) {
     res.status(403).send("OOOOPS! Please enter an email address and password!");
   // sends 400 if email address is not in database
-  } else if (!emailChecker(credentials.email, users)) {
+  } else if (!checkEmail(email, userDatabase)) {
     res.status(403).send("Oooops - looks like that email address isn't registered!");
   } else {
     // retrieves user and checks to see if supplied password matches stored
-    const user = emailChecker(credentials.email, users);
-    if (credentials.password === user.password) {
+    const user = authenticateUser(email, password, userDatabase);
+    if (user) {
     // sets cookie if user creds match and redirects to /urls, otherwise sends 400 error
       res.cookie("userID", user.userID);
       res.redirect("/urls");
@@ -131,16 +115,18 @@ app.get("/", (req, res) => {
 
 // index of tiny URLS
 app.get("/urls", (req, res) => {
-  const templateVars = { 
-    urls: urlDatabase, 
-    user: users[req.cookies["userID"]] };
+  const templateVars = {
+    user: userDatabase[req.cookies["userID"]],
+    urls: urlDatabase
+  };
   res.render("urls_index", templateVars);
 });
 
 // go forth and make a tiny link
 app.get("/urls/new", (req, res) => {
   const templateVars = {
-    user: users[req.cookies["userID"]]
+    user: userDatabase[req.cookies["userID"]],
+    urls: urlDatabase
   };
   res.render("urls_new", templateVars);
 });
@@ -160,7 +146,7 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 // IMPORTANT: DON'T BUILD any "/urls/... below this!
 app.get("/urls/:shortURL", (req, res) => {
   const templateVars = {
-    user: users[req.cookies["userID"]],
+    user: userDatabase[req.cookies["userID"]],
     shortURL: req.params.shortURL, //this appears in the html
     longURL: urlDatabase[req.params.shortURL]
   };
