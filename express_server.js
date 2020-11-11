@@ -23,6 +23,7 @@ app.use(bodyParser.urlencoded({extended: true}));
 
 // ** REGISTRATION FUNCTIONALITY 
 
+// user database
 const users = {
   qy3yow:{ 
     userID: 'qy3yow',
@@ -31,8 +32,7 @@ const users = {
   }
 };
 
-
-// returns true if email address is already in user database
+// returns user object if email address is already in user database
 const emailChecker = (email, users) => {
   for (let user in users) {
     if (users[user].email === email) {
@@ -42,36 +42,41 @@ const emailChecker = (email, users) => {
   return false;
 };
 
-// registration page - TODO make this redirect to /urls if logged in
+// registration page -  redirects to /urls if logged in
 app.get("/register", (req, res) => {
   const templateVars = {
     user: users[req.cookies["userID"]]
   };
-  res.render("urls_register", templateVars);
+  if (!templateVars.user) {
+    res.render("urls_register", templateVars);
+  } else res.redirect("/urls")
+  
 });
 
 app.post("/register", (req, res) => {
-  const userData = req.body; // contains email and password
+  const credentials = req.body; // contains email and password
   // sends status 400 if email or password are falsey OR if email is already registered
-  if (!userData.email || !userData.password) {
-    res.status(400).send("OOOOPS! Please enter an email address and password!");
-  } else if (emailChecker(userData.email, users)) {
-    res.status(400).send("Oooops - looks like that email address is already registered!");
+  if (!credentials.email || !credentials.password) {
+    res.status(403).send("OOOOPS! Please enter an email address and password!");
+  } else if (emailChecker(credentials.email, users)) {
+    res.status(403).send("Oooops - looks like that email address is already registered!");
   } else {
   // once email passes checks, generates random user ID and pushes data to users object
   const userID = generateRandomString();
-  users[userID] = { userID, email: userData.email, password: userData.password };
+  users[userID] = { userID, email: credentials.email, password: credentials.password };
   // sets cookie from userID
   res.cookie("userID", userID);
   res.redirect('/urls');
   };
 })
-
+// send user to login page - redirects to /url if logged in
 app.get("/login", (req, res) => {
   const templateVars = {
     user: users[req.cookies["userID"]]
   };
-  res.render("urls_login", templateVars)
+  if (!templateVars.user) {
+    res.render("urls_login", templateVars);
+  } else res.redirect("/urls")
 })
 
 // LOGIN LOGIC
@@ -79,7 +84,7 @@ app.post("/login", (req, res) => {
   const credentials = req.body;
   // checks to see if email & password are truthy
   if (!credentials.email || !credentials.password) {
-    res.status(400).send("OOOOPS! Please enter an email address and password!");
+    res.status(403).send("OOOOPS! Please enter an email address and password!");
   // sends 400 if email address is not in database
   } else if (!emailChecker(credentials.email, users)) {
     res.status(403).send("Oooops - looks like that email address isn't registered!");
@@ -109,6 +114,7 @@ app.post("/urls", (req, res) => {
   urlDatabase[shortURL] = `${longURL}`;  // adds new shortURL : longURL key:value to database object (this will change to SQL)
   res.redirect(`/urls/${shortURL}`);         // redirects to shortURL instance!
 });
+
 // modify an existing URL
 app.post("/url_mod/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL; //takes shortURL from origin page
@@ -118,9 +124,11 @@ app.post("/url_mod/:shortURL", (req, res) => {
 
 })
 
+// home page
 app.get("/", (req, res) => {
   res.redirect("/urls");
 });
+
 // index of tiny URLS
 app.get("/urls", (req, res) => {
   const templateVars = { 
@@ -128,18 +136,20 @@ app.get("/urls", (req, res) => {
     user: users[req.cookies["userID"]] };
   res.render("urls_index", templateVars);
 });
+
 // go forth and make a tiny link
 app.get("/urls/new", (req, res) => {
   const templateVars = {
     user: users[req.cookies["userID"]]
-    
   };
   res.render("urls_new", templateVars);
 });
+
 // why not keep it useful for the APIs
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
+
 // delete requested link and redirect back to index page
 app.post("/urls/:shortURL/delete", (req, res) => {
   const shortURL = req.params.shortURL;
@@ -156,14 +166,12 @@ app.get("/urls/:shortURL", (req, res) => {
   };
   res.render("urls_show", templateVars);
 });
+
 // Redirects shortform URL directly to target webaddress
 app.get("/u/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
-  const longURL = urlDatabase[shortURL];
-     
+  const longURL = urlDatabase[shortURL];   
   res.redirect(longURL);
-    
-  
 });
 
 
