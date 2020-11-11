@@ -1,13 +1,19 @@
 const express = require("express");
 const bodyParser = require("body-parser");
-const cookieParser = require('cookie-parser');
+const cookieSession = require('cookie-session');
 const bcrypt = require('bcrypt');
 const { checkEmail, authenticateUser, generateRandomString, urlsForUser } = require("./helpers");
 
 const app = express();
 const PORT = 8080;
 
-app.use(cookieParser());
+app.use(cookieSession({
+  name: 'session',
+  keys: ['wabbalubbadubdub'],
+
+  // Cookie Options
+  maxAge: 24 * 60 * 60 * 1000 // 24 hours
+}))
 app.set('view engine', 'ejs');
 app.use(bodyParser.urlencoded({extended: true}));
 
@@ -32,7 +38,7 @@ const userDatabase = {
 // registration page -  redirects to /urls if logged in
 app.get("/register", (req, res) => {
   const templateVars = {
-    user: userDatabase[req.cookies["userID"]],
+    user: userDatabase[req.session.userID],
   };
   if (!templateVars.user) {
     res.render("urls_register", templateVars);
@@ -52,15 +58,14 @@ app.post("/register", (req, res) => {
     const hashedPassword = bcrypt.hashSync(password, 10);
     userDatabase[userID] = { userID, email, hashedPassword };
     // sets cookie from userID
-    console.log(userDatabase);
-    res.cookie("userID", userID);
+    req.session.userID = userID;
     res.redirect('/urls');
   }
 });
 // send user to login page - redirects to /url if logged in
 app.get("/login", (req, res) => {
   const templateVars = {
-    user: userDatabase[req.cookies["userID"]]
+    user: userDatabase[req.session.userID]
   };
   if (!templateVars.user) {
     res.render("urls_login", templateVars);
@@ -81,7 +86,7 @@ app.post("/login", (req, res) => {
     const user = authenticateUser(email, password, userDatabase);
     if (user) {
     // sets cookie if user creds match and redirects to /urls, otherwise sends 400 error
-      res.cookie("userID", user.userID);
+      req.session.userID = user.userID;
       res.redirect("/urls");
     } else {
       res.status(403).send("OOOOPS! Incorrect password!");
@@ -91,13 +96,13 @@ app.post("/login", (req, res) => {
 
 // clears cookie when logout button triggered
 app.post("/logout", (req, res) => {
-  res.clearCookie('userID');
+  req.session = null;
   res.redirect("/urls");
 });
 
 // posting logic
 app.post("/urls", (req, res) => {
-  const userID = req.cookies["userID"];
+  const userID = req.session.userID;
   const longURL = req.body.longURL; // 
   const shortURL = generateRandomString(); 
   urlDatabase[shortURL] = { longURL, userID };  // adds new shortURL : { longURL, userID }  key:value to database object 
@@ -107,7 +112,7 @@ app.post("/urls", (req, res) => {
 
 // modify an existing URL
 app.post("/url_mod/:shortURL", (req, res) => {
-  const user = userDatabase[req.cookies["userID"]];
+  const user = userDatabase[req.session.userID];
   const shortURL = req.params.shortURL; //takes shortURL from origin page
   const longURL = req.body.longURL; // new user submitted longURL
   // checking credentials before allowing edits or deletions
@@ -128,9 +133,9 @@ app.get("/", (req, res) => {
 // index of tiny URLS
 app.get("/urls", (req, res) => {
   const templateVars = {
-    user: userDatabase[req.cookies["userID"]],
+    user: userDatabase[req.session.userID],
     // filters urls in database based on user ID
-    urls: urlsForUser(req.cookies["userID"], urlDatabase)
+    urls: urlsForUser(req.session.userID, urlDatabase)
   };
   res.render("urls_index", templateVars);
 });
@@ -138,7 +143,7 @@ app.get("/urls", (req, res) => {
 // go forth and make a tiny link 
 app.get("/urls/new", (req, res) => {
   const templateVars = {
-    user: userDatabase[req.cookies["userID"]],
+    user: userDatabase[req.session.userID],
     urls: urlDatabase
   };
   // (but only if you are logged in)
@@ -154,7 +159,7 @@ app.get("/urls.json", (req, res) => {
 
 // delete requested link and redirect back to index page
 app.post("/urls/:shortURL/delete", (req, res) => {
-  const user = userDatabase[req.cookies["userID"]];
+  const user = userDatabase[req.session.userID];
   const shortURL = req.params.shortURL;
   // checking credentials before allowing edits or deletions
   if (!user) {
@@ -169,7 +174,7 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 // IMPORTANT: DON'T BUILD any "/urls/... below this!
 app.get("/urls/:shortURL", (req, res) => {
   const templateVars = {
-    user: userDatabase[req.cookies["userID"]],
+    user: userDatabase[req.session.userID],
     shortURL: req.params.shortURL, //this appears in the html
     longURL: urlDatabase[req.params.shortURL]
   };
