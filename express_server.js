@@ -11,13 +11,13 @@ app.use(bodyParser.urlencoded({extended: true}));
 
 //** PLACEHOLDER DATABASES TO CHECK FUNCTIONALITY */
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+  b6UTxQ: { longURL: "https://www.tsn.ca", userID: "aJ48lW" },
+  i3BoGr: { longURL: "https://www.google.ca", userID: "aJ48lW" }
 };
 
 const userDatabase = {
-  qy3yow:{
-    userID: 'qy3yow',
+  aJ48lW: {
+    userID: "aJ48lW",
     email: 'test@test',
     password: 'test'
   }
@@ -71,7 +71,7 @@ app.post("/login", (req, res) => {
   } else if (!checkEmail(email, userDatabase)) {
     res.status(403).send("Oooops - looks like that email address isn't registered!");
   } else {
-    // retrieves user and checks to see if supplied password matches stored
+    // retrieves user if supplied password matches stored
     const user = authenticateUser(email, password, userDatabase);
     if (user) {
     // sets cookie if user creds match and redirects to /urls, otherwise sends 400 error
@@ -91,17 +91,19 @@ app.post("/logout", (req, res) => {
 
 // posting logic
 app.post("/urls", (req, res) => {
-  const longURL = req.body.longURL; // gets target URL from request body, should check here to make sure URL is correctly formatted + includes http://
-  const shortURL = generateRandomString(); // random string
-  urlDatabase[shortURL] = `${longURL}`;  // adds new shortURL : longURL key:value to database object (this will change to SQL)
+  const userID = req.cookies["userID"];
+  const longURL = req.body.longURL; // 
+  const shortURL = generateRandomString(); 
+  urlDatabase[shortURL] = { longURL, userID };  // adds new shortURL : { longURL, userID }  key:value to database object 
   res.redirect(`/urls/${shortURL}`);         // redirects to shortURL instance!
+  
 });
 
 // modify an existing URL
 app.post("/url_mod/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL; //takes shortURL from origin page
   const longURL = req.body.longURL; // new user submitted longURL
-  urlDatabase[shortURL] = `${longURL}`; // modifies existing entry
+  urlDatabase[shortURL].longURL = longURL; // modifies existing entry
   res.redirect(`/urls/${shortURL}`); // redirects to same page but with new data
 });
 
@@ -125,7 +127,9 @@ app.get("/urls/new", (req, res) => {
     user: userDatabase[req.cookies["userID"]],
     urls: urlDatabase
   };
-  res.render("urls_new", templateVars);
+  if (templateVars.user) {
+    res.render("urls_new", templateVars);
+  } else res.redirect("/login");  
 });
 
 // why not keep it useful for the APIs
@@ -145,7 +149,7 @@ app.get("/urls/:shortURL", (req, res) => {
   const templateVars = {
     user: userDatabase[req.cookies["userID"]],
     shortURL: req.params.shortURL, //this appears in the html
-    longURL: urlDatabase[req.params.shortURL]
+    longURL: urlDatabase[req.params.shortURL].longURL
   };
   res.render("urls_show", templateVars);
 });
@@ -153,7 +157,7 @@ app.get("/urls/:shortURL", (req, res) => {
 // Redirects shortform URL directly to target webaddress
 app.get("/u/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
-  const longURL = urlDatabase[shortURL];
+  const longURL = urlDatabase[shortURL].longURL;
   res.redirect(longURL);
 });
 
