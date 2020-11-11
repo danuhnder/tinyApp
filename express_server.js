@@ -65,6 +65,10 @@ app.post("/register", (req, res) => {
   };
 })
 
+app.get("/login", (req, res) => {
+  
+})
+
 // sets cookie on login
 app.post("/login", (req, res) => {
   const userID = req.body.userID;
