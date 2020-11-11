@@ -3,7 +3,7 @@ const bodyParser = require("body-parser");
 const cookieParser = require('cookie-parser');
 const app = express();
 const PORT = 8080;
-const { checkEmail, authenticateUser, generateRandomString } = require("./helpers");
+const { checkEmail, authenticateUser, generateRandomString, urlsForUser } = require("./helpers");
 
 app.use(cookieParser());
 app.set('view engine', 'ejs');
@@ -12,7 +12,8 @@ app.use(bodyParser.urlencoded({extended: true}));
 //** PLACEHOLDER DATABASES TO CHECK FUNCTIONALITY */
 const urlDatabase = {
   b6UTxQ: { longURL: "https://www.tsn.ca", userID: "aJ48lW" },
-  i3BoGr: { longURL: "https://www.google.ca", userID: "aJ48lW" }
+  jawaspeak: { longURL: "https://www.google.ca", userID: "aJ48lW" },
+  hipdad: { longURL: "http://www.achewood.com", userID: "robocop"} 
 };
 
 const userDatabase = {
@@ -101,9 +102,15 @@ app.post("/urls", (req, res) => {
 
 // modify an existing URL
 app.post("/url_mod/:shortURL", (req, res) => {
+  const user = userDatabase[req.cookies["userID"]];
   const shortURL = req.params.shortURL; //takes shortURL from origin page
   const longURL = req.body.longURL; // new user submitted longURL
-  urlDatabase[shortURL].longURL = longURL; // modifies existing entry
+  if (!user) {
+    res.status(403).send('nice try, hacker')
+  };
+  if (urlDatabase[shortURL].userID === user.userID) {
+    urlDatabase[shortURL].longURL = longURL; //
+  }
   res.redirect(`/urls/${shortURL}`); // redirects to same page but with new data
 });
 
@@ -116,12 +123,13 @@ app.get("/", (req, res) => {
 app.get("/urls", (req, res) => {
   const templateVars = {
     user: userDatabase[req.cookies["userID"]],
-    urls: urlDatabase
+    // filters urls in database based on user ID
+    urls: urlsForUser(req.cookies["userID"], urlDatabase)
   };
   res.render("urls_index", templateVars);
 });
 
-// go forth and make a tiny link
+// go forth and make a tiny link (but only if you are logged in)
 app.get("/urls/new", (req, res) => {
   const templateVars = {
     user: userDatabase[req.cookies["userID"]],
@@ -139,8 +147,14 @@ app.get("/urls.json", (req, res) => {
 
 // delete requested link and redirect back to index page
 app.post("/urls/:shortURL/delete", (req, res) => {
+  const user = userDatabase[req.cookies["userID"]];
   const shortURL = req.params.shortURL;
+  if (!user) {
+    res.status(403).send('nice try, hacker')
+  };
+  if (urlDatabase[shortURL].userID === user.userID) {
   delete urlDatabase[shortURL];
+  }
   res.redirect("/urls");
 });
 
@@ -149,7 +163,7 @@ app.get("/urls/:shortURL", (req, res) => {
   const templateVars = {
     user: userDatabase[req.cookies["userID"]],
     shortURL: req.params.shortURL, //this appears in the html
-    longURL: urlDatabase[req.params.shortURL].longURL
+    longURL: urlDatabase[req.params.shortURL]
   };
   res.render("urls_show", templateVars);
 });

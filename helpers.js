@@ -26,4 +26,14 @@ const generateRandomString = () => {
   return randomString;
 };
 
-module.exports = { checkEmail, authenticateUser, generateRandomString }
+const urlsForUser = (id, db) => {
+  const yourURLs = {};
+  for (let url in db) {
+    if (db[url].userID === id) {
+      yourURLs[url] = db[url];
+    }
+  }
+  return yourURLs;
+}
+
+module.exports = { checkEmail, authenticateUser, generateRandomString, urlsForUser }

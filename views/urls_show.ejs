@@ -7,10 +7,11 @@
 
 <body>
   <%- include('partials/_header') %>
+  <% if (user && user.userID === longURL.userID) { %>
   <div class="card text-center">
       <div class="card-header"></div>
       <div class="card-body">
-        <h5 class="card-title">TinyURL for: <%= longURL %></h5>
+        <h5 class="card-title">TinyURL for: <a href="<%= longURL.longURL %>"><%= longURL.longURL %></a></h5>
         <p class="card-text">Short URL: <a href="/u/<%= shortURL %>"><%= shortURL %></a></p>
         <form class="form-inline-center" action="/url_mod/<%=shortURL%>" method="POST">
           <div class="form-group mb-2">
@@ -22,6 +23,15 @@
       </div>
     <div class="card-footer text-muted"></div>
   </div>
+  <% } else if (user) { %>
+    <div class="card text-center">
+      <h3>Sorry, the requested URL belongs to another user! You can still visit the link <a href="/u/<%= shortURL %>">here</a></h3>
+    </div>
+  <% } else { %>
+    <div class="card text-center">
+      <h3><a href="/login">Login</a> or <a href="/register">register</a> to see your URLs!</h3>
+    </div>
+    <% } %>
   <!-- Bootstrap JS -->
   <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
