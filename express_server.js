@@ -27,14 +27,16 @@ const users = {
   qy3yow:{ 
     userID: 'qy3yow',
     email: 'test@test',
-    password: 'tobyrules' 
+    password: 'test' 
   }
 };
+
+
 // returns true if email address is already in user database
 const emailChecker = (email, users) => {
   for (let user in users) {
     if (users[user].email === email) {
-      return true;
+      return users[user];
     }
   };
   return false;
@@ -66,15 +68,34 @@ app.post("/register", (req, res) => {
 })
 
 app.get("/login", (req, res) => {
-  
+  const templateVars = {
+    user: users[req.cookies["userID"]]
+  };
+  res.render("urls_login", templateVars)
 })
 
-// sets cookie on login
+// LOGIN LOGIC
 app.post("/login", (req, res) => {
-  const userID = req.body.userID;
-  res.cookie('userID', userID);
-  res.redirect("/urls");
+  const credentials = req.body;
+  // checks to see if email & password are truthy
+  if (!credentials.email || !credentials.password) {
+    res.status(400).send("OOOOPS! Please enter an email address and password!");
+  // sends 400 if email address is not in database
+  } else if (!emailChecker(credentials.email, users)) {
+    res.status(403).send("Oooops - looks like that email address isn't registered!");
+  } else {
+    // retrieves user and checks to see if supplied password matches stored
+    const user = emailChecker(credentials.email, users);
+    if (credentials.password === user.password) {
+    // sets cookie if user creds match and redirects to /urls, otherwise sends 400 error
+      res.cookie("userID", user.userID);
+      res.redirect("/urls");
+    } else {
+      res.status(403).send("OOOOPS! Incorrect password!");
+    }
+  }
 });
+
 // clears cookie when logout button triggered
 app.post("/logout", (req, res) => {
   res.clearCookie('userID')
@@ -97,7 +118,9 @@ app.post("/url_mod/:shortURL", (req, res) => {
 
 })
 
-
+app.get("/", (req, res) => {
+  res.redirect("/urls");
+});
 // index of tiny URLS
 app.get("/urls", (req, res) => {
   const templateVars = { 
