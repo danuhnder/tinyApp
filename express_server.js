@@ -105,6 +105,7 @@ app.post("/url_mod/:shortURL", (req, res) => {
   const user = userDatabase[req.cookies["userID"]];
   const shortURL = req.params.shortURL; //takes shortURL from origin page
   const longURL = req.body.longURL; // new user submitted longURL
+  // checking credentials before allowing edits or deletions
   if (!user) {
     res.status(403).send('nice try, hacker')
   };
@@ -129,12 +130,13 @@ app.get("/urls", (req, res) => {
   res.render("urls_index", templateVars);
 });
 
-// go forth and make a tiny link (but only if you are logged in)
+// go forth and make a tiny link 
 app.get("/urls/new", (req, res) => {
   const templateVars = {
     user: userDatabase[req.cookies["userID"]],
     urls: urlDatabase
   };
+  // (but only if you are logged in)
   if (templateVars.user) {
     res.render("urls_new", templateVars);
   } else res.redirect("/login");  
@@ -149,6 +151,7 @@ app.get("/urls.json", (req, res) => {
 app.post("/urls/:shortURL/delete", (req, res) => {
   const user = userDatabase[req.cookies["userID"]];
   const shortURL = req.params.shortURL;
+  // checking credentials before allowing edits or deletions
   if (!user) {
     res.status(403).send('nice try, hacker')
   };
@@ -178,5 +181,5 @@ app.get("/u/:shortURL", (req, res) => {
 
 // crank this baby open
 app.listen(PORT, () => {
-  console.log(`Example app listening on port ${PORT}!`);
+  console.log(`"What are these? URLs for ANTS!?" server listening on port ${PORT}!`);
 });
