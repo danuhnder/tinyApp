@@ -1,3 +1,5 @@
+const bcrypt = require('bcrypt')
+
 // returns true if email address is already in user database
 const checkEmail = (email, db) => {
   for (let user in db) {
@@ -10,9 +12,9 @@ const checkEmail = (email, db) => {
 
 // returns user as object if email and password match
 const authenticateUser = (email, password, db) => {
-  for (let user in db) {
+    for (let user in db) {
     if (db[user].email === email) {
-      if (db[user].password === password) {
+      if (bcrypt.compareSync(password, db[user].hashedPassword)) {
         return db[user];
       }
     }

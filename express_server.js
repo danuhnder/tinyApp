@@ -1,9 +1,11 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const cookieParser = require('cookie-parser');
+const bcrypt = require('bcrypt');
+const { checkEmail, authenticateUser, generateRandomString, urlsForUser } = require("./helpers");
+
 const app = express();
 const PORT = 8080;
-const { checkEmail, authenticateUser, generateRandomString, urlsForUser } = require("./helpers");
 
 app.use(cookieParser());
 app.set('view engine', 'ejs');
@@ -13,15 +15,16 @@ app.use(bodyParser.urlencoded({extended: true}));
 const urlDatabase = {
   b6UTxQ: { longURL: "https://www.tsn.ca", userID: "aJ48lW" },
   jawaspeak: { longURL: "https://www.google.ca", userID: "aJ48lW" },
-  hipdad: { longURL: "http://www.achewood.com", userID: "robocop"} 
 };
 
 const userDatabase = {
   aJ48lW: {
     userID: "aJ48lW",
     email: 'test@test',
-    password: 'test'
+    //plaintext 'test'
+    hashedPassword: '$2b$10$eqCC0.zsP5kZ9BXu35scMuv5olPLduEGaIA36i4E8PdGmyPd5saCi'
   }
+  
 };
 
 //** REGISTRATION FUNCTIONALITY */
@@ -46,8 +49,10 @@ app.post("/register", (req, res) => {
   } else {
   // once email passes checks, generates random user ID and pushes data to users object
     const userID = generateRandomString();
-    userDatabase[userID] = { userID, email, password };
+    const hashedPassword = bcrypt.hashSync(password, 10);
+    userDatabase[userID] = { userID, email, hashedPassword };
     // sets cookie from userID
+    console.log(userDatabase);
     res.cookie("userID", userID);
     res.redirect('/urls');
   }
