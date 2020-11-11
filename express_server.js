@@ -4,13 +4,6 @@ const cookieParser = require('cookie-parser');
 const app = express();
 const PORT = 8080; // default port 8080
 // this will become database with SQL access
-const users = {
-  qy3yow:
-  { userID: 'qy3yow',
-    email: 'toby@gunsbad.net',
-    password: 'tobyrules' }
-}
-
 
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
@@ -27,10 +20,63 @@ app.use(cookieParser());
 app.set('view engine', 'ejs');
 // parses body of response
 app.use(bodyParser.urlencoded({extended: true}));
-// sets a cookie from userID login
+
+
+// **
+// *
+// *
+// * REGISTRATION FUNCTIONALITY 
+const users = {
+  qy3yow:{ 
+    userID: 'qy3yow',
+    email: 'toby@gunsbad.net',
+    password: 'tobyrules' 
+  }
+}
+// returns true if email address is already in user database
+const emailChecker = (email, users) => {
+  for (let user in users) {
+    if (users[user].email === email) {
+      return true;
+    }
+  }
+  return false;
+}
+console.log(emailChecker('toby@gunsbad.net', users))
+// registration page - TODO make this redirect to /urls if logged in
+app.get("/register", (req, res) => {
+  const templateVars = {
+    user: users[req.cookies["userID"]]
+  };
+  res.render("urls_register", templateVars);
+});
+
+app.post("/register", (req, res) => {
+  const userData = req.body;
+  console.log(users);
+  console.log(userData.email)
+  console.log(emailChecker(userData.email))
+  // sends status 400 if email or password are falsey OR if email is already registered
+  if (!userData.email || !userData.password) {
+    res.status(400).send("OOOOPS! Please enter an email address and password!")
+    
+  } else if (emailChecker(userData.email, users)) {
+    res.status(400).send("Oooops - looks like that email address is already registered!")
+    urls
+  } else {
+  // once email passes checks, generates random user ID and pushes data to users object
+  const userID = generateRandomString();
+  users[userID] = { userID, email: userData.email, password: userData.password };
+  // sets cookie from userID
+  res.cookie("userID", userID);
+  res.redirect('/urls');
+  };
+})
+
+// sets cookie on login
 app.post("/login", (req, res) => {
-  const userName = req.body.userID;
-  res.cookie('userID', userName);
+  const userID = req.body.userID;
+  res.cookie('userID', userID);
   res.redirect("/urls");
 });
 // clears cookie when logout button triggered
@@ -54,22 +100,7 @@ app.post("/url_mod/:shortURL", (req, res) => {
   res.redirect(`/urls/${shortURL}`) // redirects to same page but with new data (hopefully)
 
 })
-// registration page
-app.get("/register", (req, res) => {
-  const templateVars = {
-    user: users[req.cookies["userID"]]
-  };
-  res.render("urls_register", templateVars);
-});
 
-app.post("/register", (req, res) => {
-  const userData = req.body;
-  const userID = generateRandomString();
-  users[userID] = { userID, email: userData.email, password: userData.password };
-  res.cookie("userID", userID);
-  res.redirect('/urls');
-
-})
 
 // index of tiny URLS
 app.get("/urls", (req, res) => {
