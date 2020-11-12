@@ -1,26 +1,13 @@
-const bcrypt = require('bcrypt');
-
 // returns true if email address is already in user database
-const checkEmail = (email, db) => {
+const returnUser = (email, db) => {
   for (let user in db) {
     if (db[user].email === email) {
-      return true;
+      return db[user];
     }
-  }
+  };
   return false;
 };
 
-// returns user as object if email and password match
-const authenticateUser = (email, password, db) => {
-  for (let user in db) {
-    if (db[user].email === email) {
-      if (bcrypt.compareSync(password, db[user].hashedPassword)) {
-        return db[user];
-      }
-    }
-  }
-  return false;
-};
 
 // used to generate shortURL;
 const generateRandomString = () => {
@@ -36,6 +23,6 @@ const urlsForUser = (id, db) => {
     }
   }
   return yourURLs;
-};
+}
 
-module.exports = { checkEmail, authenticateUser, generateRandomString, urlsForUser };
+module.exports = { returnUser, generateRandomString, urlsForUser }
