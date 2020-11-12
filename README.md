@@ -4,9 +4,9 @@ TinyApp is a full stack web application built with Node and Express that allows 
 TinyApp provides you with full and exclusive control over your created links and analytics so you can track visits to your links, unique visitors and visitation times!
 
 ## Final Product
-
-!["screenshot description"](#)
-!["screenshot description"](#)
+!["Screenshot of login page"](https://github.com/danuhnder/tinyApp/blob/main/docs/login.png)
+!["Screenshot of user landing page"](https://github.com/danuhnder/tinyApp/blob/main/docs/show-my-urls.png)
+!["Screenshot of URL modification and analytics page"](https://github.com/danuhnder/tinyApp/blob/main/docs/edit-and-track.png)
 
 ## Dependencies
 
