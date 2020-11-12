@@ -21,6 +21,22 @@
           </div>
         </form>
         <p class="card-text">This Tiny URL has been visited <%= longURL.visitEvents %> times by <%= longURL.uniqueVisitors.length %> different visitors.</p>
+        <table class="table">
+          <thead>
+            <tr>
+              <th scope="col">Timestamp</th>
+              <th scope="col">Visitor ID</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% for(let visit in longURL.visitLog) { %>
+              <tr>
+                <td><%=visit%></td>
+                <td><%=longURL.visitLog[visit]%></td>
+              </tr>
+            <% } %>
+          </tbody>
+        </table>
       </div>
     <div class="card-footer text-muted"></div>
   </div>

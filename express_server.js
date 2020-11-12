@@ -11,8 +11,6 @@ const PORT = 8080;
 app.use(cookieSession({
   name: 'session',
   keys: ['wabbalubbadubdub'],
-
-  // Cookie Options
   maxAge: 168 * 60 * 60 * 1000 // 168 hours / one week
 }));
 app.set('view engine', 'ejs');
@@ -21,8 +19,20 @@ app.use(methodOverride('_method'));
 
 //** PLACEHOLDER DATABASES TO CHECK FUNCTIONALITY */
 const urlDatabase = {
-  b6UTxQ: { longURL: "https://www.tsn.ca", userID: "aJ48lW", visitEvents: 0, uniqueVisitors: [], visitLog: {} },
-  jawaspeak: { longURL: "https://www.google.ca", userID: "aJ48lW", visitEvents: 0, uniqueVisitors: [], visitLog: {} },
+  b6UTxQ: { 
+    longURL: "https://www.tsn.ca", 
+    userID: "aJ48lW", 
+    visitEvents: 0, 
+    uniqueVisitors: [], 
+    visitLog: {} 
+  },
+  jawaspeak: { 
+    longURL: "https://www.google.ca", 
+    userID: "aJ48lW", 
+    visitEvents: 0, 
+    uniqueVisitors: [], 
+    visitLog: {} 
+  },
 };
 
 const userDatabase = {
@@ -180,7 +190,7 @@ app.get("/urls/:shortURL", (req, res) => {
     user: userDatabase[req.session.userID],
     shortURL: req.params.shortURL,
     longURL: urlDatabase[req.params.shortURL]
-    
+
   };
   res.render("urls_show", templateVars);
 });
