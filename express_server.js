@@ -2,7 +2,7 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const cookieSession = require('cookie-session');
 const bcrypt = require('bcrypt');
-const methodOverride = require('method-override')
+const methodOverride = require('method-override');
 const { checkEmail, authenticateUser, generateRandomString, urlsForUser } = require("./helpers");
 
 const app = express();
@@ -19,21 +19,21 @@ app.use(methodOverride('_method'));
 
 //** PLACEHOLDER DATABASES TO CHECK FUNCTIONALITY */
 const urlDatabase = {
-  b6UTxQ: { 
-    longURL: "https://www.tsn.ca", 
-    userID: "aJ48lW", 
+  b6UTxQ: {
+    longURL: "https://www.tsn.ca",
+    userID: "aJ48lW",
     created: '1605191863212',
-    visitEvents: 0, 
-    uniqueVisitors: [], 
-    visitLog: {} 
+    visitEvents: 0,
+    uniqueVisitors: [],
+    visitLog: {}
   },
-  jawaspeak: { 
-    longURL: "https://www.google.ca", 
+  jawaspeak: {
+    longURL: "https://www.google.ca",
     userID: "aJ48lW",
     created: '1605191863754',
-    visitEvents: 0, 
-    uniqueVisitors: [], 
-    visitLog: {} 
+    visitEvents: 0,
+    uniqueVisitors: [],
+    visitLog: {}
   },
 };
 
@@ -43,7 +43,7 @@ const userDatabase = {
     email: 'test@test',
     //plaintext 'test'
     hashedPassword: '$2b$10$eqCC0.zsP5kZ9BXu35scMuv5olPLduEGaIA36i4E8PdGmyPd5saCi'
-  }  
+  }
 };
 
 //** REGISTRATION FUNCTIONALITY */
@@ -146,7 +146,7 @@ app.put("/url_mod/:shortURL", (req, res) => {
 
 // I got sick of typing /urls
 app.get("/", (req, res) => {
-  if(req.session.userID) {
+  if (req.session.userID) {
     res.redirect("/urls");
   } else res.redirect("/login");
 });
@@ -156,7 +156,7 @@ app.get("/urls", (req, res) => {
   const templateVars = {
     user: userDatabase[req.session.userID],
     // filters urls in database based on user ID
-    urls: urlsForUser(req.session.userID, urlDatabase)
+    urls: urlsForUser(req.session.userID, urlDatabase),
   };
   res.render("urls_index", templateVars);
 });
@@ -200,20 +200,24 @@ app.get("/urls/:shortURL", (req, res) => {
 // Redirects shortform URL directly to target webaddress
 app.get("/u/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
-  const longURL = urlDatabase[shortURL].longURL;
-  // tracks the use of the shortened link
-  urlDatabase[shortURL].visitEvents += 1;
-  // sets a cookie if none is present
-  if (!req.session.userID) {
-    req.session.userID = generateRandomString()
-  };
-  // adds user cookie if not present in the uniqueVisitors array
-  if (!urlDatabase[shortURL].uniqueVisitors.includes(req.session.userID)){
-    urlDatabase[shortURL].uniqueVisitors.push(req.session.userID)
-  };
-  // timestamps visit and visitor id 
-  urlDatabase[shortURL].visitLog[Date.now()] = req.session.userID;
-  res.redirect(longURL);
+  if (urlDatabase[shortURL]) {
+    const longURL = urlDatabase[shortURL].longURL;
+    // tracks the use of the shortened link
+    urlDatabase[shortURL].visitEvents += 1;
+    // sets a cookie if none is present
+    if (!req.session.userID) {
+      req.session.userID = generateRandomString();
+    }
+    // adds user cookie if not present in the uniqueVisitors array
+    if (!urlDatabase[shortURL].uniqueVisitors.includes(req.session.userID)) {
+      urlDatabase[shortURL].uniqueVisitors.push(req.session.userID);
+    }
+    // timestamps visit and visitor id
+    urlDatabase[shortURL].visitLog[Date.now()] = req.session.userID;
+    res.redirect(longURL);
+  } else {
+    res.redirect(404, "/urls");
+  }
 });
 
 
