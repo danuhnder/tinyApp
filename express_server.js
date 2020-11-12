@@ -3,7 +3,7 @@ const bodyParser = require("body-parser");
 const cookieSession = require('cookie-session');
 const bcrypt = require('bcrypt');
 const methodOverride = require('method-override');
-const { checkEmail, authenticateUser, generateRandomString, urlsForUser } = require("./helpers");
+const { returnUser, generateRandomString, urlsForUser } = require("./helpers");
 
 const app = express();
 const PORT = 8080;
@@ -19,31 +19,11 @@ app.use(methodOverride('_method'));
 
 //** PLACEHOLDER DATABASES TO CHECK FUNCTIONALITY */
 const urlDatabase = {
-  b6UTxQ: {
-    longURL: "https://www.tsn.ca",
-    userID: "aJ48lW",
-    created: '1605191863212',
-    visitEvents: 0,
-    uniqueVisitors: [],
-    visitLog: {}
-  },
-  jawaspeak: {
-    longURL: "https://www.google.ca",
-    userID: "aJ48lW",
-    created: '1605191863754',
-    visitEvents: 0,
-    uniqueVisitors: [],
-    visitLog: {}
-  },
+  
 };
 
 const userDatabase = {
-  aJ48lW: {
-    userID: "aJ48lW",
-    email: 'test@test',
-    //plaintext 'test'
-    hashedPassword: '$2b$10$eqCC0.zsP5kZ9BXu35scMuv5olPLduEGaIA36i4E8PdGmyPd5saCi'
-  }
+  
 };
 
 //** REGISTRATION FUNCTIONALITY */
@@ -65,7 +45,7 @@ app.post("/register", (req, res) => {
   // sends status 403 if email or password are falsey OR if email is already registered
   if (!email || !password) {
     res.status(403).send("OOOOPS! Please enter an email address and password!");
-  } else if (checkEmail(email, userDatabase)) {
+  } else if (returnUser(email, userDatabase)) {
     res.status(403).send("Oooops - looks like that email address is already registered!");
   } else {
   // generates random user ID, hashes password and adds data to users object
@@ -96,13 +76,13 @@ app.post("/login", (req, res) => {
   if (!email || !password) {
     res.status(403).send("OOOOPS! Please enter an email address and password!");
     // sends 403 if email address is NOT in database
-  } else if (!checkEmail(email, userDatabase)) {
+  } else if (!returnUser(email, userDatabase)) {
     res.status(403).send("Oooops - looks like that email address isn't registered!");
   } else {
     // retrieves user if supplied password matches stored (authenticateUser function includes bcrypt.compareSync())
-    const user = authenticateUser(email, password, userDatabase);
-    // user will be false if password did not match
-    if (user) {
+    const user = returnUser(email, userDatabase);
+    // checks input password against stored hash 
+    if (bcrypt.compareSync(password, user.hashedPassword)) {
     // sets cookie if user creds match and redirects to /urls, otherwise sends 400 error
       req.session.userID = user.userID;
       res.redirect("/urls");
