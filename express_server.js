@@ -2,6 +2,7 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const cookieSession = require('cookie-session');
 const bcrypt = require('bcrypt');
+const methodOverride = require('method-override')
 const { checkEmail, authenticateUser, generateRandomString, urlsForUser } = require("./helpers");
 
 const app = express();
@@ -12,15 +13,16 @@ app.use(cookieSession({
   keys: ['wabbalubbadubdub'],
 
   // Cookie Options
-  maxAge: 24 * 60 * 60 * 1000 // 24 hours
-}))
+  maxAge: 168 * 60 * 60 * 1000 // 168 hours / one week
+}));
 app.set('view engine', 'ejs');
 app.use(bodyParser.urlencoded({extended: true}));
+app.use(methodOverride('_method'));
 
 //** PLACEHOLDER DATABASES TO CHECK FUNCTIONALITY */
 const urlDatabase = {
-  b6UTxQ: { longURL: "https://www.tsn.ca", userID: "aJ48lW" },
-  jawaspeak: { longURL: "https://www.google.ca", userID: "aJ48lW" },
+  b6UTxQ: { longURL: "https://www.tsn.ca", userID: "aJ48lW", visitEvents: 0, uniqueVisitors: [], visitLog: {} },
+  jawaspeak: { longURL: "https://www.google.ca", userID: "aJ48lW", visitEvents: 0, uniqueVisitors: [], visitLog: {} },
 };
 
 const userDatabase = {
@@ -29,31 +31,32 @@ const userDatabase = {
     email: 'test@test',
     //plaintext 'test'
     hashedPassword: '$2b$10$eqCC0.zsP5kZ9BXu35scMuv5olPLduEGaIA36i4E8PdGmyPd5saCi'
-  }
-  
+  }  
 };
 
 //** REGISTRATION FUNCTIONALITY */
-
-// registration page -  redirects to /urls if logged in
+//*
+// send user to registration page
 app.get("/register", (req, res) => {
   const templateVars = {
     user: userDatabase[req.session.userID],
   };
   if (!templateVars.user) {
     res.render("urls_register", templateVars);
+    // redirects to /urls if logged in
   } else res.redirect("/urls");
 });
 
+// REGISTRATION LOGIC
 app.post("/register", (req, res) => {
-  const { email, password } = req.body; // contains email and password
-  // sends status 400 if email or password are falsey OR if email is already registered
+  const { email, password } = req.body;
+  // sends status 403 if email or password are falsey OR if email is already registered
   if (!email || !password) {
     res.status(403).send("OOOOPS! Please enter an email address and password!");
   } else if (checkEmail(email, userDatabase)) {
     res.status(403).send("Oooops - looks like that email address is already registered!");
   } else {
-  // once email passes checks, generates random user ID and pushes data to users object
+  // generates random user ID, hashes password and adds data to users object
     const userID = generateRandomString();
     const hashedPassword = bcrypt.hashSync(password, 10);
     userDatabase[userID] = { userID, email, hashedPassword };
@@ -62,28 +65,31 @@ app.post("/register", (req, res) => {
     res.redirect('/urls');
   }
 });
-// send user to login page - redirects to /url if logged in
+
+// send user to login page
 app.get("/login", (req, res) => {
   const templateVars = {
     user: userDatabase[req.session.userID]
   };
   if (!templateVars.user) {
     res.render("urls_login", templateVars);
+    // redirects to /urls if logged in
   } else res.redirect("/urls");
 });
 
 // LOGIN LOGIC
 app.post("/login", (req, res) => {
   const { email, password } = req.body;
-  // checks to see if email & password are truthy
+  // sends status 403 if email or password are falsey
   if (!email || !password) {
     res.status(403).send("OOOOPS! Please enter an email address and password!");
-  // sends 400 if email address is not in database
+    // sends 403 if email address is NOT in database
   } else if (!checkEmail(email, userDatabase)) {
     res.status(403).send("Oooops - looks like that email address isn't registered!");
   } else {
-    // retrieves user if supplied password matches stored
+    // retrieves user if supplied password matches stored (authenticateUser function includes bcrypt.compareSync())
     const user = authenticateUser(email, password, userDatabase);
+    // user will be false if password did not match
     if (user) {
     // sets cookie if user creds match and redirects to /urls, otherwise sends 400 error
       req.session.userID = user.userID;
@@ -100,34 +106,37 @@ app.post("/logout", (req, res) => {
   res.redirect("/urls");
 });
 
-// posting logic
+// NEW URL LOGIC
 app.post("/urls", (req, res) => {
   const userID = req.session.userID;
-  const longURL = req.body.longURL; // 
-  const shortURL = generateRandomString(); 
-  urlDatabase[shortURL] = { longURL, userID };  // adds new shortURL : { longURL, userID }  key:value to database object 
-  res.redirect(`/urls/${shortURL}`);         // redirects to shortURL instance!
+  const longURL = req.body.longURL; //
+  const shortURL = generateRandomString();
+  urlDatabase[shortURL] = { longURL, userID, visitEvents: 0, uniqueVisitors: [], visitLog: {} };
+  // redirects to new shortURL instance
+  res.redirect(`/urls/${shortURL}`);
   
 });
 
 // modify an existing URL
-app.post("/url_mod/:shortURL", (req, res) => {
+app.put("/url_mod/:shortURL", (req, res) => {
   const user = userDatabase[req.session.userID];
   const shortURL = req.params.shortURL; //takes shortURL from origin page
   const longURL = req.body.longURL; // new user submitted longURL
   // checking credentials before allowing edits or deletions
   if (!user) {
-    res.status(403).send('nice try, hacker')
-  };
-  if (urlDatabase[shortURL].userID === user.userID) {
-    urlDatabase[shortURL].longURL = longURL; //
+    res.status(403).send('nice try, hacker');
   }
-  res.redirect(`/urls/${shortURL}`); // redirects to same page but with new data
+  if (urlDatabase[shortURL].userID === user.userID) {
+    urlDatabase[shortURL].longURL = longURL;
+  }
+  res.redirect(`/urls/${shortURL}`); // redirects to updated shortURL instance
 });
 
-// home page
+// I got sick of typing /urls
 app.get("/", (req, res) => {
-  res.redirect("/urls");
+  if(req.session.userID) {
+    res.redirect("/urls");
+  } else res.redirect("/login");
 });
 
 // index of tiny URLS
@@ -140,33 +149,27 @@ app.get("/urls", (req, res) => {
   res.render("urls_index", templateVars);
 });
 
-// go forth and make a tiny link 
+// go forth and make a tiny link
 app.get("/urls/new", (req, res) => {
   const templateVars = {
-    user: userDatabase[req.session.userID],
-    urls: urlDatabase
+    user: userDatabase[req.session.userID]
   };
   // (but only if you are logged in)
   if (templateVars.user) {
     res.render("urls_new", templateVars);
-  } else res.redirect("/login");  
-});
-
-// why not keep it useful for the APIs
-app.get("/urls.json", (req, res) => {
-  res.json(urlDatabase);
+  } else res.redirect("/login");
 });
 
 // delete requested link and redirect back to index page
-app.post("/urls/:shortURL/delete", (req, res) => {
+app.delete("/urls/:shortURL/delete", (req, res) => {
   const user = userDatabase[req.session.userID];
   const shortURL = req.params.shortURL;
   // checking credentials before allowing edits or deletions
   if (!user) {
-    res.status(403).send('nice try, hacker')
-  };
+    res.status(403).send('nice try, hacker');
+  }
   if (urlDatabase[shortURL].userID === user.userID) {
-  delete urlDatabase[shortURL];
+    delete urlDatabase[shortURL];
   }
   res.redirect("/urls");
 });
@@ -175,8 +178,9 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 app.get("/urls/:shortURL", (req, res) => {
   const templateVars = {
     user: userDatabase[req.session.userID],
-    shortURL: req.params.shortURL, //this appears in the html
+    shortURL: req.params.shortURL,
     longURL: urlDatabase[req.params.shortURL]
+    
   };
   res.render("urls_show", templateVars);
 });
@@ -185,6 +189,19 @@ app.get("/urls/:shortURL", (req, res) => {
 app.get("/u/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
   const longURL = urlDatabase[shortURL].longURL;
+  // tracks the use of the shortened link
+  urlDatabase[shortURL].visitEvents += 1;
+  // sets a cookie if none is present
+  if (!req.session.userID) {
+    req.session.userID = generateRandomString()
+  };
+  // adds user cookie if not present in the uniqueVisitors array
+  if (!urlDatabase[shortURL].uniqueVisitors.includes(req.session.userID)){
+    urlDatabase[shortURL].uniqueVisitors.push(req.session.userID)
+  };
+  // timestamps visit and visitor id 
+  urlDatabase[shortURL].visitLog[Date.now()] = req.session.userID;
+  console.log(urlDatabase[shortURL]);
   res.redirect(longURL);
 });
 

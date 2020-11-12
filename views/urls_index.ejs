@@ -27,12 +27,13 @@
             <td><%=url%></td>
             <td><a href="<%= urls[url].longURL %>"><%= urls[url].longURL %></a></td>
             <td><a href="/urls/<%=url%>"><button type="button" class="btn btn-warning">Edit</button></a></td>
-            <td><form method="POST" action="/urls/<%=url%>/delete"><button class="btn btn-danger" type="submit">Delete</button></form>
+            <td><form method="POST" action="/urls/<%=url%>/delete?_method=DELETE"><button class="btn btn-danger" type="submit">Delete</button></form>
             </td>
           </tr>
         <% } %>
       </tbody>
     </table>
+    <h4><a href="/urls/new">Create a new short link</a></h4>
   <% } else { %>
     <div class="card text-center">
       <h3><a href="/login">Login</a> or <a href="/register">register</a> to see your URLs!</h3>
