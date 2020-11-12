@@ -22,13 +22,15 @@ const urlDatabase = {
   b6UTxQ: { 
     longURL: "https://www.tsn.ca", 
     userID: "aJ48lW", 
+    created: '1605191863212',
     visitEvents: 0, 
     uniqueVisitors: [], 
     visitLog: {} 
   },
   jawaspeak: { 
     longURL: "https://www.google.ca", 
-    userID: "aJ48lW", 
+    userID: "aJ48lW",
+    created: '1605191863754',
     visitEvents: 0, 
     uniqueVisitors: [], 
     visitLog: {} 
@@ -121,7 +123,7 @@ app.post("/urls", (req, res) => {
   const userID = req.session.userID;
   const longURL = req.body.longURL; //
   const shortURL = generateRandomString();
-  urlDatabase[shortURL] = { longURL, userID, visitEvents: 0, uniqueVisitors: [], visitLog: {} };
+  urlDatabase[shortURL] = { longURL, userID, created: new Date(), visitEvents: 0, uniqueVisitors: [], visitLog: {} };
   // redirects to new shortURL instance
   res.redirect(`/urls/${shortURL}`);
   
@@ -189,7 +191,7 @@ app.get("/urls/:shortURL", (req, res) => {
   const templateVars = {
     user: userDatabase[req.session.userID],
     shortURL: req.params.shortURL,
-    longURL: urlDatabase[req.params.shortURL]
+    url: urlDatabase[req.params.shortURL]
 
   };
   res.render("urls_show", templateVars);
@@ -211,7 +213,6 @@ app.get("/u/:shortURL", (req, res) => {
   };
   // timestamps visit and visitor id 
   urlDatabase[shortURL].visitLog[Date.now()] = req.session.userID;
-  console.log(urlDatabase[shortURL]);
   res.redirect(longURL);
 });
 
